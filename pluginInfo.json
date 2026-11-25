@@ -2,7 +2,7 @@
 	"repoName": "fpp-StepperMotion",
 	"name": "Stepper Motion",
 	"author": "darylc",
-	"description": "Drives up to eight Trinamic stepper drivers (TMC5130 or TMC5160, selected per stepper) on the Pi's SPI0 and SPI1 buses from sequence channel values. Each stepper listens to one channel; the channel value selects a motion preset (rehome, go to position, or a repeating position/dwell cycle). Includes a commissioning wizard for finding home and travel range, and a tuning panel for run/hold current and speed.",
+	"description": "Drives up to eight Trinamic stepper drivers (TMC5130 or TMC5160, selected per stepper) on a Raspberry Pi 3 or later's SPI0 and SPI1 buses from sequence channel values. Each stepper listens to one channel; the channel value selects a motion preset (rehome, go to position, or a repeating position/dwell cycle). Includes a commissioning wizard for finding home and travel range, and a tuning panel for run/hold current and speed.",
 	"homeURL": "https://github.com/darylc/fpp-StepperMotion",
 	"srcURL": "https://github.com/darylc/fpp-StepperMotion.git",
 	"bugURL": "https://github.com/darylc/fpp-StepperMotion/issues",

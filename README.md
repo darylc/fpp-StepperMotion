@@ -10,8 +10,9 @@ The setup page has a commissioning wizard (find the home stop, measure the
 travel), a tuning panel, a preset editor, and FPP commands for playlists, the
 scheduler, events and MQTT.
 
-**Needs:** a Raspberry Pi running FPP 10.4 or later, and TMC5130A-BOB or
-TMC5160-BOB breakout boards (see [Boards](#boards)).
+**Needs:** a Raspberry Pi 3 or later (the Zero 2 W included; the Pi 1, Pi 2
+and first Pi Zero are not supported) running FPP 10.4 or later, and
+TMC5130A-BOB or TMC5160-BOB breakout boards (see [Boards](#boards)).
 
 ## Quick start
 
