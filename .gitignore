@@ -1,0 +1,8 @@
+# Build output. The plugin is rebuilt from source by scripts/fpp_install.sh on
+# install, reinstall and update, so the artifacts are never worth versioning.
+*.o
+*.d
+*.so
+
+# A symlinked checkout: fppd loads a symlinked plugin only with this marker
+.linkOK

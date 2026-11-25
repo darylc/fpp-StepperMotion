@@ -1,0 +1,138 @@
+/*
+ * Stepper Motion -- page styling.
+ *
+ * Served by plugin.php as a static asset; there is no PHP pass over this file.
+ * Colours come from FPP's own CSS custom properties so the page follows the
+ * active theme rather than pinning its own palette.
+ */
+  .tmc-gauge-track { fill: none; stroke: var(--fpp-gauge-bg-color); stroke-width: 10; stroke-linecap: round; }
+  .tmc-gauge-fill { fill: none; stroke-width: 10; stroke-linecap: round; stroke: var(--bs-success); }
+  .tmc-gauge-needle { stroke: var(--fpp-text-primary); stroke-width: 2.5; stroke-linecap: round; }
+  .tmc-gauge-muted { fill: var(--fpp-text-muted); }
+  .tmc-gauge-label { fill: var(--fpp-text-primary); font-weight: 600; }
+  .tmc-gauge-pos { fill: var(--fpp-text-primary); font-weight: 600; }
+  .tmc-gauge-busy .tmc-gauge-fill { stroke: var(--bs-info); }
+  .tmc-gauge-busy .tmc-gauge-needle { stroke: var(--bs-info); }
+  .tmc-gauge-unknown .tmc-gauge-fill { stroke: var(--fpp-text-muted); }
+  .tmc-gauge-unknown .tmc-gauge-needle { stroke: var(--fpp-text-muted); }
+  .tmc-gauge-fault .tmc-gauge-fill { stroke: var(--bs-danger); }
+  .tmc-gauge-fault .tmc-gauge-needle { stroke: var(--bs-danger); }
+  .tmc-gauge line, .tmc-gauge path { transition: stroke 0.2s linear; }
+  /* The text block to the left of the gauge: it takes the width the gauge
+     leaves, never less than 12rem (below that the facts line breaks into a
+     column of single words -- the gauge wraps under it instead), and
+     min-width 0 lets it shrink to that basis inside the flex row. */
+  .tmc-live-detail { flex: 1 1 12rem; min-width: 0; }
+  /* text-truncate needs a block with a width to clip against; min-width 0
+     on the parent gives it one. Kept as a class in case FPP's bootstrap
+     build lacks .text-truncate. */
+  #tmcRoot .tmc-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The status line above the buttons is always there, even when empty, so
+     the buttons sit at the same height on every card. */
+  #tmcRoot .tmc-row-status { min-height: 1.25em; }
+  /* A stepper card fppd is not running: dimmed, controls still live. */
+  #tmcRoot .tmc-row-inert { opacity: 0.5; }
+  /* Per-stepper cards under the steppers panel: as many columns as fit the
+     card width, each at least wide enough for a readable facts block beside
+     the 200px gauge and the ten buttons on one line (~28rem), one column on
+     a phone. min(26rem, 100%) keeps the track from overflowing a viewport
+     narrower than 28rem, where the buttons wrap inside the card instead. */
+  #tmcRoot .tmc-stepper-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(28rem, 100%), 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Collapsible section header. Each stepper's configuration is split into
+     sections that are shut by default -- hardware, currents and rehome staging
+     are set once and then only read, and so is commissioning, so none of them
+     should be occupying the screen of someone who came here to run a preset. */
+  #tmcRoot .tmc-section .card-header { padding: 0; }
+  /* The last section in a container drops its bottom margin, so the gap
+     below it is the container's padding alone -- the same as the gap above
+     the first one (inside Global settings, and at the foot of each pane). */
+  #tmcRoot .tmc-section:last-child { margin-bottom: 0 !important; } /* !important: outranks bootstrap's .mb-3 */
+  #tmcRoot .tmc-section-toggle {
+    width: 100%; display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.75rem; text-align: left; text-decoration: none;
+    color: var(--fpp-text-primary);
+  }
+  #tmcRoot .tmc-section-toggle:hover, #tmcRoot .tmc-section-toggle:focus { text-decoration: none; }
+  #tmcRoot .tmc-section-toggle .fa-chevron-down { transition: transform 0.15s linear; }
+  #tmcRoot .tmc-section-toggle.collapsed .fa-chevron-down { transform: rotate(-90deg); }
+  /* The one-line "what is in here" digest shown while a section is shut. */
+  #tmcRoot .tmc-section-summary { margin-left: auto; text-align: right; }
+  /* On a phone the digest takes its own line under the title, rather than
+     squeezing the title into a narrow column beside it. */
+  @media (max-width: 575.98px) {
+    #tmcRoot .tmc-section-toggle { flex-wrap: wrap; }
+    #tmcRoot .tmc-section-summary { width: 100%; margin-left: 1.5rem; text-align: left; }
+  }
+  /* Nested "Advanced settings" disclosure inside a section body -- register-
+     level and simulator-only fields that are set once, if ever, and would
+     otherwise crowd out the handful of controls people actually tune. */
+  #tmcRoot .tmc-adv-toggle { text-decoration: none; }
+  #tmcRoot .tmc-adv-toggle:hover, #tmcRoot .tmc-adv-toggle:focus { text-decoration: none; }
+  #tmcRoot .tmc-adv-toggle .fa-chevron-right { transition: transform 0.15s linear; }
+  #tmcRoot .tmc-adv-toggle[aria-expanded="true"] .fa-chevron-right { transform: rotate(90deg); }
+  #tmcRoot .settingsTable .row { align-items: center; margin-bottom: 0.4rem; }
+  #tmcRoot .settingsTable h3 { font-size: 1rem; }
+  /* Presets table width. FPP's cut-down bootstrap build ships neither a .table
+     nor a .table-responsive rule -- verified against fpp-bootstrap-5-3.css, in
+     which neither selector appears at all -- so the classes on the markup are
+     inert here and the table falls back to a bare shrink-to-fit <table>. It
+     therefore stopped at its own content width, 963px inside a 1659px card at a
+     1920 viewport, leaving the right third of the card empty while Detail was
+     squeezed to the width of its longest string.
+
+     width:100% hands that slack to Detail, which is the only column without a
+     fixed th width and so takes the whole remainder. Do not add a min-width to
+     go with it: the fixed columns already come to 48.5rem and the table happily
+     compresses below its natural width at narrow viewports, so a min-width would
+     only introduce sideways scrolling where today there is none. overflow-x is
+     restored on the wrapper for the case where the fixed columns genuinely will
+     not fit, so the overflow scrolls inside this card and never drags the page
+     body sideways. */
+  #tmcRoot .tmc-presets-wrap { overflow-x: auto; }
+  #tmcRoot .tmc-presets-table { width: 100%; }
+  #tmcRoot .tmc-presets-table th { white-space: nowrap; }
+  /* The same missing .table rules mean no row separators either, so the
+     Detail text of one preset ran straight into the next. A hairline
+     between rows and a little vertical padding in the theme's own colours. */
+  #tmcRoot .tmc-presets-table th,
+  #tmcRoot .tmc-presets-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--bs-border-color); }
+  #tmcRoot .tmc-presets-table thead th { border-bottom-width: 2px; }
+  #tmcRoot .tmc-presets-table tbody tr:last-child td { border-bottom: 0; }
+  /* A phone stacks each preset into a short labelled block with its buttons
+     underneath, rather than a table to scroll sideways to reach them. */
+  @media (max-width: 575.98px) {
+    #tmcRoot .tmc-presets-table thead { display: none; }
+    #tmcRoot .tmc-presets-table,
+    #tmcRoot .tmc-presets-table tbody,
+    #tmcRoot .tmc-presets-table tr,
+    #tmcRoot .tmc-presets-table td { display: block; width: 100%; }
+    #tmcRoot .tmc-presets-table tr { padding: 0.5rem 0; border-bottom: 1px solid var(--bs-border-color); }
+    #tmcRoot .tmc-presets-table tbody tr:last-child { border-bottom: 0; }
+    #tmcRoot .tmc-presets-table td { border-bottom: 0; padding: 0.1rem 0; }
+    #tmcRoot .tmc-presets-table td[data-label]::before {
+      content: attr(data-label) ": "; font-weight: 600; color: var(--fpp-text-muted);
+    }
+    #tmcRoot .tmc-presets-table td:empty { display: none; }
+    #tmcRoot .tmc-presets-table .tmc-preset-actions { padding-top: 0.4rem; text-align: left; }
+    #tmcRoot .tmc-presets-table .tmc-preset-actions > div { justify-content: flex-start !important; flex-wrap: wrap; }
+  }
+  /* The built-in value-0 row: present but not one of yours. */
+  #tmcRoot .tmc-preset-builtin td { color: var(--fpp-text-muted); font-style: italic; }
+  /* The SPI wiring table under Global settings: the same missing
+     .table-responsive, so it scrolls inside its wrapper at phone width. */
+  #tmcRoot .tmc-wiring-wrap { overflow-x: auto; }
+  #tmcRoot #tmcSpiWiring th, #tmcRoot #tmcSpiWiring td { padding: 0.15rem 1rem 0.15rem 0; white-space: nowrap; }
+  #tmcRoot .icon-help { cursor: help; }
+  /* A refused save lists every problem, one per line. */
+  #tmcRoot .tmc-alert-text { white-space: pre-line; }
+  /* The line under an inheritable field in a stepper's pane saying what it
+     gets from the Global settings while it is left empty, or what it
+     overrides once it is not. */
+  #tmcRoot .tmc-inherit-hint { margin-top: 0.15rem; }
+  #tmcRoot .tmc-inherit-hint:empty { display: none; }

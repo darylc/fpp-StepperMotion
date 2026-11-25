@@ -1,0 +1,38 @@
+{
+	"repoName": "fpp-StepperMotion",
+	"name": "Stepper Motion",
+	"author": "darylc",
+	"description": "Drives up to eight Trinamic stepper drivers (TMC5130 or TMC5160, selected per stepper) on the Pi's SPI0 and SPI1 buses from sequence channel values. Each stepper listens to one channel; the channel value selects a motion preset (rehome, go to position, or a repeating position/dwell cycle). Includes a commissioning wizard for finding home and travel range, and a tuning panel for run/hold current and speed.",
+	"homeURL": "https://github.com/darylc/fpp-StepperMotion",
+	"srcURL": "https://github.com/darylc/fpp-StepperMotion.git",
+	"bugURL": "https://github.com/darylc/fpp-StepperMotion/issues",
+	"iconURL": "https://raw.githubusercontent.com/darylc/fpp-StepperMotion/main/icon.png",
+	"allowUpdates": 1,
+	"releaseNotesStyle": "gitHistory",
+	"versions": [
+		{
+			"minFPPVersion": "10.4",
+			"maxFPPVersion": "0",
+			"branch": "main",
+			"sha": "",
+			"platforms": [
+				"Raspberry Pi"
+			]
+		}
+	],
+	"privacy": {
+		"summary": "Drives stepper motors over this device's SPI header pins, taking those pins through fppd while it runs; sends nothing off it.",
+		"sends": [],
+		"collects": [],
+		"sensors": [],
+		"remoteAccess": "none",
+		"systemChanges": [
+			{
+				"kind": "core-settings",
+				"what": "Adds one channel output entry (config/co-other.json) through FPP's API and keeps its channel range in step. Removed on uninstall."
+			}
+		],
+		"closedCode": false,
+		"other": "The channel output entry is added once at least one stepper is configured (when fppd loads the plugin, or on the first save), and its start channel and channel count are kept in step with the plugin's channel block when fppd starts, after every save and whenever co-other.json changes. An entry the user deletes is put back at the next fppd start or the next save on the plugin's page, never while Channel Outputs is being edited. It is removed on uninstall and kept across a Reinstall. The SPI data pins of each bus in use and one chip-select pin per stepper are held by fppd while the steppers run; every other header pin stays free. SPI1 (header pins 35/38/40, also the I2S pins) needs FPP's fpp-spi1-nopins overlay, which FPP adds to config.txt when it is upgraded (one reboot), for /dev/spidev1.0. Its HTTP API (/api/plugin-apis/stepper-motion) and its FPP commands move the motors (jog, rehome, go to a position, run a preset, park, release) and change the plugin's configuration for anyone who can reach this FPP's web interface or send it FPP commands (playlists, the scheduler, events, MQTT)."
+	}
+}

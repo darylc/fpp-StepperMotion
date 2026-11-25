@@ -1,0 +1,166 @@
+{
+	"paths": {
+		"/stepper-motion": {
+			"get": {
+				"summary": "Stepper Motion status",
+				"description": "Reachable from outside fppd as /api/plugin-apis/stepper-motion. action=status (the default) returns every running stepper, or the one named by axis: live position, driver health, reference validity and the most recent job. Values are cached by each stepper's worker, so this never waits on SPI. action=axisNames lists the stepper names (it fills the Stepper argument of the plugin's FPP commands). action=config returns what the setup page loads: revision (send it back with a save), config (config.json as the daemon holds it), defaultsEffective (the defaults block with every field filled in), axesEffective (each stepper at its effective values, plus spi.path, its /dev/spidevN.0 node), spiBuses [{bus, path, pins {miso, mosi, sclk}, available}] (available: whether this box has the device node; SPI1 needs FPP 10.2 or later and a reboot), configErrors and structuralChangePending. Only these three actions answer a GET; everything else needs a POST (405 otherwise).",
+				"parameters": [
+					{
+						"name": "action",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"status",
+								"axisNames",
+								"config"
+							]
+						},
+						"description": "status (default), axisNames or config"
+					},
+					{
+						"name": "axis",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"description": "Stepper index or name; omit for all steppers"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK"
+					}
+				}
+			},
+			"post": {
+				"summary": "Commission, tune or drive a stepper; save the configuration",
+				"description": "Stepper actions (axis required): probe checks the SPI link, driver identity and DRV_ENN/SD_MODE wiring; nothing moves, but a driver that checks out has its far limit cleared (Probe starts re-commissioning). jog is a relative move, unclamped until a far limit exists and clamped to the soft limits after; the result reports commanded versus actual movement, so a short move finds the stop. setHome declares the current position 0. Its approach direction is dir if given, else worked out from the jogs since the last other action, else the configured rehome.dir; a new direction is saved. The job reports approachDir, approachFrom (request, jogs or config) and configUpdated. setMax records the current position as the far limit; one on the wrong side of home fails with wrongSide in the job data, and flip=1 reverses the homing direction first. goto, rehome (coarse contact, back off, slow creep), testTravel (runs the full travel N times and reports counterErrorFullsteps, the error in the driver's step counter, which cannot detect lost steps), runPreset, park, release, and stop (accepted in any state, even while a sequence drives the stepper). rps above 4, a current above 31, or a distance or position beyond 1000000 full steps is refused; rps 0 or less and a negative current mean the configured value. Long actions run asynchronously: the response carries a jobId, and progress is read through action=status. Configuration actions (no axis): saveConfig (body {config, revision}) validates every field of every stepper. It either refuses with the complete list (400 {status: ERROR, errors, message}; nothing written) or writes config.json, applies the tunables to the running steppers live and answers {status: OK, restartNeeded, message}. restartNeeded is true, and FPP's restart flag set, for a structural change: the stepper list, names, the channel block, channel sources and slots, enabled, driver, simulated or real, SPI bus, chip select or speed. savePresets (body {presets, revision}) replaces only the shared preset table, keyed \"1\"..\"255\", validated the same way. revision is the one action=config returned; if the saved configuration has changed since (another tab, or setHome storing a homing direction) the save is refused with 409 and nothing is written. Leave it out to skip the check. Saves are serialised and answer the new revision. Stepper names must be unique, also once punctuation and spaces are ignored.",
+				"parameters": [
+					{
+						"name": "action",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"probe",
+								"jog",
+								"setHome",
+								"setMax",
+								"goto",
+								"rehome",
+								"testTravel",
+								"runPreset",
+								"park",
+								"release",
+								"stop",
+								"saveConfig",
+								"savePresets"
+							]
+						}
+					},
+					{
+						"name": "axis",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						},
+						"description": "Stepper index or name (not needed by saveConfig/savePresets)"
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"deltaFullsteps": {
+										"type": "number",
+										"description": "jog"
+									},
+									"targetFullsteps": {
+										"type": "number",
+										"description": "goto"
+									},
+									"minFullsteps": {
+										"type": "integer",
+										"description": "setHome"
+									},
+									"maxFullsteps": {
+										"type": "integer",
+										"description": "setHome"
+									},
+									"dir": {
+										"type": "string",
+										"enum": [
+											"ccw",
+											"cw"
+										],
+										"description": "setHome: the approach direction"
+									},
+									"flip": {
+										"type": "integer",
+										"description": "setMax: 1 reverses the recorded homing direction first"
+									},
+									"cycles": {
+										"type": "integer",
+										"description": "testTravel, 1-100"
+									},
+									"value": {
+										"type": "integer",
+										"description": "runPreset, 1-255"
+									},
+									"rps": {
+										"type": "number",
+										"description": "probe, jog, goto, testTravel, park: speed in rev/s (default 0.10). Ignored by setHome, setMax, rehome (which uses the rehome staging speeds), release, runPreset and stop."
+									},
+									"irun": {
+										"type": "integer",
+										"description": "probe, jog, goto, testTravel, park: run current 0..31 (default: the stepper's motor.irun). Ignored by the other actions."
+									},
+									"ihold": {
+										"type": "integer",
+										"description": "probe, jog, goto, testTravel, park: hold current 0..31 (default: the stepper's motor.ihold). Ignored by the other actions."
+									},
+									"config": {
+										"type": "object",
+										"description": "saveConfig: the whole configuration {idleTimeoutMs, channelBlock, defaults, axes[], presets}. channelBlock is {source: channel, start} or {source: model, model}. defaults holds what every stepper inherits; the global-only settings may appear nowhere else. A stepper's block carries only what differs, plus its channel ({mode: slot, slot 1..8}, {mode: absolute, number} or {mode: model, model, offset}), enabled: false to keep it configured but not started, and, for a real stepper, spi.bus (0|1) and spi.cs (a header pin name such as \"P1-24\": a GPIO pin of the 40-pin header that is no bus's data line, unique across steppers)."
+									},
+									"presets": {
+										"type": "object",
+										"description": "savePresets: the preset table, channel value -> preset"
+									},
+									"revision": {
+										"type": "integer",
+										"description": "saveConfig, savePresets: the revision action=config returned"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Job accepted"
+					},
+					"409": {
+						"description": "Refused: a sequence is driving this stepper, it is busy, or (saveConfig, savePresets) the configuration changed since the given revision"
+					},
+					"400": {
+						"description": "Refused configuration: errors[] lists every problem; nothing was written"
+					},
+					"404": {
+						"description": "Unknown action or stepper"
+					},
+					"405": {
+						"description": "A GET for an action that needs a POST"
+					}
+				}
+			}
+		}
+	}
+}
